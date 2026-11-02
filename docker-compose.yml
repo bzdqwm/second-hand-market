@@ -1,0 +1,48 @@
+# ============================================================
+# 二手交易平台 · 基础设施容器
+# 说明：MySQL 用本机已装好的 MySQL80（3306），不用容器
+#       这里只起 Redis 和 PostgreSQL(pgvector)
+# 用法：docker compose up -d
+# ============================================================
+
+# 目录名是中文，compose 推导不出项目名，这里显式指定
+name: market
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: market-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: market-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: market
+      POSTGRES_PASSWORD: market123
+      POSTGRES_DB: market
+      TZ: Asia/Shanghai
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U market -d market"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis-data:
+  pg-data:
