@@ -28,6 +28,8 @@ mybatis-plus:
 logging:
   level:
     com.yjx.market: debug
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{traceId:-}] %logger{30} - %msg%n"
 
 # ============================================================
 # 阿里云 OSS 配置

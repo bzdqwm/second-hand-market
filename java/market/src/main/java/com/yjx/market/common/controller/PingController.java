@@ -1,5 +1,6 @@
 package com.yjx.market.common.controller;
 
+import com.yjx.market.common.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -30,20 +31,20 @@ public class PingController {
     }
 
     @GetMapping("/ping")
-    public Map<String, Object> ping() {
+    public Result<Map<String, Object>> ping() {          // 原来是 Map<String, Object>
         log.info("收到请求: GET /api/ping");
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "ok");
         data.put("app", "market");
         data.put("time", LocalDateTime.now());
-        return data;
+        return Result.ok(data);                          // 原来是 return data
     }
 
     /**
      * 验证 Java -> Python 链路：Java 发 HTTP 请求，把 Python 返回的 JSON 原样带回来。
      */
     @GetMapping("/ping-ai")
-    public Map<String, Object> pingAi() {
+    public Result<Map<String, Object>> pingAi() {
         log.info("收到请求: GET /api/ping-ai，准备调用 Python");
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "ok");
@@ -54,6 +55,6 @@ public class PingController {
                 .body(new ParameterizedTypeReference<Map<String, Object>>() {});
 
         data.put("python", pythonResp);
-        return data;
+        return Result.ok(data);
     }
 }
