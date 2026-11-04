@@ -1,4 +1,4 @@
-package com.yjx.market.common.controller;
+package com.yjx.market.controller;
 
 import com.yjx.market.common.result.Result;
 import org.slf4j.Logger;
