@@ -53,3 +53,13 @@ oss:
 ai:
   python:
     base-url: http://127.0.0.1:8000
+
+jwt:
+  # 签名密钥：HS256 要求至少 32 字节（256 bit），短了 jjwt 直接抛 WeakKeyException
+  secret: market-second-hand-platform-jwt-secret-key-2026-hs256
+  # token 有效期：7 天（毫秒）
+  expire: 604800000
+  # 前端携带 token 的请求头名
+  header: Authorization
+  # token 前缀（注意后面有一个空格）
+  prefix: "Bearer "
