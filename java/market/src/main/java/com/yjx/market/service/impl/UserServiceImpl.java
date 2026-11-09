@@ -9,6 +9,7 @@ import com.yjx.market.pojo.dto.LoginDTO;
 import com.yjx.market.pojo.dto.RegisterDTO;
 import com.yjx.market.pojo.entity.User;
 import com.yjx.market.pojo.vo.LoginVO;
+import com.yjx.market.pojo.vo.UserVO;
 import com.yjx.market.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -80,5 +82,26 @@ public class UserServiceImpl implements UserService {
                 .avatar(user.getAvatar())
                 .role(user.getRole())
                 .build();
+    }
+
+    @Override
+    public UserVO getProfile(Long userId) {
+        // ① 按主键查（走索引，很快）
+        User user = userMapper.selectById(userId);
+
+        // ② token 有效但用户已从库里消失（被删号）→ 视同登录失效
+        if (user == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户不存在或已注销");
+        }
+
+        // ③ 实体 → VO，只搬该给的字段
+        UserVO vo = new UserVO();
+        vo.setId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        vo.setRole(user.getRole());
+        vo.setCreateTime(user.getCreateTime());
+        return vo;
     }
 }
