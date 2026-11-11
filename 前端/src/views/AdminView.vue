@@ -12,9 +12,9 @@
 <style scoped>
 .card {
   max-width: 760px;
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
 }
 
 h1 {
@@ -23,7 +23,7 @@ h1 {
 }
 
 .hint {
-  color: #999;
+  color: var(--text-muted);
   font-size: 13px;
 }
 </style>

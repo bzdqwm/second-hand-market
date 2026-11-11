@@ -1,0 +1,70 @@
+/* ============================================================
+ * 全局设计变量
+ *
+ * 规矩：各页面只引用 var(--xxx)，不要写死色值和尺寸。
+ * 想换外观 → 改这个文件，全站跟着变，不用翻任何一个 .vue
+ * ============================================================ */
+:root {
+  /* ---------- 品牌色 ---------- */
+  --brand: #ff6b35;          /* 主色 */
+  --brand-hover: #ff8355;    /* 主色 hover */
+  --brand-light: #fff3ee;    /* 主色浅底：标签、选中态背景 */
+  --brand-text: #fff;        /* 主色底上的文字 */
+
+  /* ---------- 文字色 ---------- */
+  --text-main: #333;         /* 标题、正文 */
+  --text-body: #555;         /* 次级正文 */
+  --text-sub: #666;          /* 说明文字 */
+  --text-muted: #999;        /* 辅助提示 */
+  --text-faint: #bbb;        /* 极弱提示 */
+  --text-disabled: #ccc;     /* 禁用态 */
+
+  /* ---------- 背景与边框 ---------- */
+  --bg-page: #f5f6f8;        /* 页面底色 */
+  --bg-card: #fff;           /* 卡片 / 顶栏 */
+  --border: #e8e8e8;
+  --border-light: #f0f0f0;
+  --border-strong: #e0e0e0;
+
+  /* ---------- 提示色（登录页 redirect 提示） ---------- */
+  --warn-bg: #fff7e6;
+  --warn-text: #d48806;
+
+  /* ---------- 字体 ---------- */
+  --font-family: 'Microsoft YaHei', system-ui, sans-serif;
+
+  /* ---------- 圆角 ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* ---------- 间距 ---------- */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+
+  /* ---------- 布局 ---------- */
+  --header-h: 56px;
+
+  /* ==========================================================
+   * Element Plus 主题色
+   *
+   * 注意：只改 --el-color-primary 是不够的。
+   * Element Plus 的 hover、focus 边框、禁用浅底用的是
+   * light-3/5/7/8/9 和 dark-2 这几档，它们是**编译期算好的独立值**。
+   * 不一起覆盖，你的按钮一 hover 就会跳回 Element 默认的蓝。
+   *
+   * 下面这组值 = #ff6b35 按 Element 的混色比例算出的对应档位。
+   * 换主色时，这 8 行要跟着重算（比例：light-N = 主色 (10-N)/10）。
+   * ========================================================== */
+  --el-color-primary: var(--brand);
+  --el-color-primary-rgb: 255, 107, 53;
+  --el-color-primary-light-3: #ff9772;
+  --el-color-primary-light-5: #ffb59a;
+  --el-color-primary-light-7: #ffd3c2;
+  --el-color-primary-light-8: #ffe1d7;
+  --el-color-primary-light-9: #fff0eb;
+  --el-color-primary-dark-2: #cc562a;
+}

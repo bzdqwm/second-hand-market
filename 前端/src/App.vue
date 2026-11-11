@@ -32,6 +32,8 @@ function logout() {
       <nav>
         <RouterLink to="/">用户端</RouterLink>
         <RouterLink to="/admin">管理端</RouterLink>
+        <!-- 临时入口：图片上传组件验证用，发布页做出来后删掉 -->
+        <RouterLink to="/demo/upload">图片上传</RouterLink>
       </nav>
 
       <div class="user-area">
@@ -51,6 +53,7 @@ function logout() {
 </template>
 
 <style>
+/* 全局骨架样式。色值/尺寸一律来自 styles/variables.css */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -58,47 +61,47 @@ function logout() {
 }
 
 body {
-  font-family: 'Microsoft YaHei', system-ui, sans-serif;
-  background: #f5f6f8;
-  color: #333;
+  font-family: var(--font-family);
+  background: var(--bg-page);
+  color: var(--text-main);
 }
 
 .topbar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  height: 56px;
-  padding: 0 24px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  gap: var(--space-lg);
+  height: var(--header-h);
+  padding: 0 var(--space-lg);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
 }
 
 .logo {
   font-weight: 700;
   font-size: 17px;
-  color: #ff6b35;
+  color: var(--brand);
 }
 
 .topbar nav {
   display: flex;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .topbar a {
-  color: #666;
+  color: var(--text-sub);
   text-decoration: none;
   font-size: 14px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .topbar a.router-link-active {
-  color: #ff6b35;
-  background: #fff3ee;
+  color: var(--brand);
+  background: var(--brand-light);
 }
 
 main {
-  padding: 32px 24px;
+  padding: 32px var(--space-lg);
 }
 
 /* 顶栏右侧：登录状态 */
@@ -111,34 +114,34 @@ main {
 }
 
 .who {
-  color: #333;
+  color: var(--text-main);
   font-weight: 600;
 }
 
 .badge {
   padding: 1px 6px;
   border-radius: 3px;
-  background: #fff3ee;
-  color: #ff6b35;
+  background: var(--brand-light);
+  color: var(--brand);
   font-size: 11px;
 }
 
 .logout {
   padding: 4px 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background: #fff;
-  color: #666;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-sub);
   font-size: 12px;
   cursor: pointer;
 }
 
 .logout:hover {
-  border-color: #ff6b35;
-  color: #ff6b35;
+  border-color: var(--brand);
+  color: var(--brand);
 }
 
 .to-login {
-  color: #ff6b35 !important;
+  color: var(--brand) !important;
 }
 </style>

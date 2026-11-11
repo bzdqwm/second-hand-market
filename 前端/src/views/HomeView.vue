@@ -74,9 +74,9 @@ async function checkAI() {
 <style scoped>
 .card {
   max-width: 760px;
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
 }
 
 h1 {
@@ -85,43 +85,43 @@ h1 {
 }
 
 .hint {
-  color: #999;
+  color: var(--text-muted);
   font-size: 13px;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid #f0f0f0;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--border-light);
 }
 
 .label {
   width: 90px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-sub);
 }
 
 button {
   padding: 6px 16px;
   border: none;
-  border-radius: 4px;
-  background: #ff6b35;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-text);
   cursor: pointer;
   font-size: 13px;
 }
 
 button:disabled {
-  background: #ccc;
+  background: var(--text-disabled);
   cursor: not-allowed;
 }
 
 .status {
   font-size: 12px;
-  color: #555;
+  color: var(--text-body);
   word-break: break-all;
 }
 </style>

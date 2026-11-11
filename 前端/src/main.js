@@ -3,11 +3,14 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 import ElementPlus, { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
+// 必须放在 Element Plus 样式之后：同名 CSS 变量，后引入的覆盖先引入的
+import './styles/variables.css'
 import App from './App.vue'
 
 import HomeView from './views/HomeView.vue'
 import AdminView from './views/AdminView.vue'
 import LoginView from './views/LoginView.vue'
+import UploadDemoView from './views/UploadDemoView.vue'
 import { getToken, getUser } from './utils/token'
 
 // 路由表
@@ -38,6 +41,13 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: { title: '登录' }
+    },
+    {
+      // 临时演示页：图片上传组件验证用，发布商品页做出来后删掉
+      path: '/demo/upload',
+      name: 'uploadDemo',
+      component: UploadDemoView,
+      meta: { requiresAuth: true, title: '图片上传测试' }
     },
     // 兜底：访问不存在的路径回首页，别让用户看到白屏
     {

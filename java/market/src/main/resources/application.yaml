@@ -16,6 +16,12 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
+  # 上传大小限制：Spring 默认只允许 1MB，不改的话传手机照片直接失败
+  servlet:
+    multipart:
+      max-file-size: 10MB      # 单个文件上限
+      max-request-size: 20MB   # 单次请求上限（多图时用得到）
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

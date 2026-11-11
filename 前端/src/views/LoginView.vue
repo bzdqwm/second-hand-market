@@ -262,31 +262,31 @@ async function handleRegister() {
 .login-card {
   width: 400px;
   padding: 36px 32px 24px;
-  background: #fff;
-  border-radius: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
 .brand {
   font-size: 22px;
   font-weight: 700;
-  color: #ff6b35;
+  color: var(--brand);
   text-align: center;
 }
 
 .subtitle {
   margin: 6px 0 20px;
   font-size: 13px;
-  color: #999;
+  color: var(--text-muted);
   text-align: center;
 }
 
 .redirect-tip {
-  margin: -8px 0 16px;
+  margin: -8px 0 var(--space-md);
   padding: 8px 10px;
-  border-radius: 6px;
-  background: #fff7e6;
-  color: #d48806;
+  border-radius: var(--radius-xs);
+  background: var(--warn-bg);
+  color: var(--warn-text);
   font-size: 12px;
   text-align: center;
 }
@@ -294,19 +294,19 @@ async function handleRegister() {
 .submit {
   width: 100%;
   margin-top: 8px;
-  background: #ff6b35;
-  border-color: #ff6b35;
+  background: var(--brand);
+  border-color: var(--brand);
 }
 
 .submit:hover {
-  background: #ff8355;
-  border-color: #ff8355;
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
 }
 
 .tip {
   margin-top: 18px;
   font-size: 12px;
-  color: #bbb;
+  color: var(--text-faint);
   text-align: center;
 }
 
