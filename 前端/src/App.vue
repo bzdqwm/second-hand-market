@@ -31,9 +31,9 @@ function logout() {
       <span class="logo">二手交易平台</span>
       <nav>
         <RouterLink to="/">用户端</RouterLink>
+        <RouterLink to="/sell">卖闲置</RouterLink>
         <RouterLink to="/admin">管理端</RouterLink>
-        <!-- 临时入口：图片上传组件验证用，发布页做出来后删掉 -->
-        <RouterLink to="/demo/upload">图片上传</RouterLink>
+        <!-- 图片上传独立测试页：路由保留（/demo/upload），入口先隐藏 -->
       </nav>
 
       <div class="user-area">

@@ -10,6 +10,7 @@ import App from './App.vue'
 import HomeView from './views/HomeView.vue'
 import AdminView from './views/AdminView.vue'
 import LoginView from './views/LoginView.vue'
+import SellView from './views/SellView.vue'
 import UploadDemoView from './views/UploadDemoView.vue'
 import { getToken, getUser } from './utils/token'
 
@@ -41,6 +42,13 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: { title: '登录' }
+    },
+    {
+      // 发布闲置：必须登录（后端 POST /api/item 也要 token）
+      path: '/sell',
+      name: 'sell',
+      component: SellView,
+      meta: { requiresAuth: true, title: '发布闲置' }
     },
     {
       // 临时演示页：图片上传组件验证用，发布商品页做出来后删掉

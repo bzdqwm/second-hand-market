@@ -15,4 +15,15 @@ public interface ItemService {
      * @return 新商品 ID
      */
     Long create(Long sellerId, ItemCreateDTO dto);
+    /**
+     * 编辑商品。只能改自己的，且在售/已售状态不允许编辑。
+     */
+    void update(Long sellerId, Long itemId, ItemCreateDTO dto);
+
+    /**
+     * 上架 / 下架。
+     *
+     * @param targetStatus 只接受 ON_SALE 或 OFF_SALE
+     */
+    void changeStatus(Long sellerId, Long itemId, String targetStatus);
 }
