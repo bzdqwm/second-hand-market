@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -76,5 +77,12 @@ public class GlobalExceptionHandler {
     public Result<Void> handleException(Exception e) {
         log.error("未捕获异常", e);          // 完整堆栈进日志
         return Result.fail(ResultCode.SYSTEM_ERROR);   // 前端只拿到一句友好提示
+    }
+    /** ⑧ 路径/参数类型不对，如 /api/item/abc */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public Result<Void> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String msg = "参数格式错误：" + e.getName();
+        log.warn("{} | 传入值={}", msg, e.getValue());
+        return Result.fail(ResultCode.BAD_REQUEST, msg);
     }
 }

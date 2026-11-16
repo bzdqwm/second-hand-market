@@ -1,6 +1,10 @@
 package com.yjx.market.service;
 
 import com.yjx.market.pojo.dto.ItemCreateDTO;
+import com.yjx.market.pojo.dto.ItemQueryDTO;
+import com.yjx.market.pojo.vo.ItemCardVO;
+import com.yjx.market.pojo.vo.ItemDetailVO;
+import com.yjx.market.pojo.vo.PageVO;
 
 /**
  * 商品服务。
@@ -26,4 +30,19 @@ public interface ItemService {
      * @param targetStatus 只接受 ON_SALE 或 OFF_SALE
      */
     void changeStatus(Long sellerId, Long itemId, String targetStatus);
+    /**
+     * 商品分页搜索。
+     *
+     * @param query 查询条件
+     * @return 分页结果
+     */
+    PageVO<ItemCardVO> page(ItemQueryDTO query);
+
+    /**
+     * 商品详情。
+     *
+     * @param itemId        商品 ID
+     * @param currentUserId 当前登录用户 ID，游客传 null
+     */
+    ItemDetailVO detail(Long itemId, Long currentUserId);
 }
