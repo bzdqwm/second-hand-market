@@ -8,6 +8,7 @@ import './styles/variables.css'
 import App from './App.vue'
 
 import HomeView from './views/HomeView.vue'
+import ItemDetailView from './views/ItemDetailView.vue'
 import AdminView from './views/AdminView.vue'
 import LoginView from './views/LoginView.vue'
 import SellView from './views/SellView.vue'
@@ -49,6 +50,13 @@ const router = createRouter({
       name: 'sell',
       component: SellView,
       meta: { requiresAuth: true, title: '发布闲置' }
+    },
+    {
+      // 商品详情：游客可看
+      path: '/item/:id',
+      name: 'itemDetail',
+      component: ItemDetailView,
+      meta: { title: '商品详情' }
     },
     {
       // 临时演示页：图片上传组件验证用，发布商品页做出来后删掉

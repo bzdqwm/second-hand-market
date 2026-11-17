@@ -1,8 +1,11 @@
 <script setup>
-// 发布闲置页面
+// 发布闲置页面（布局参考闲鱼「发闲置」）
 //
-// 流程：填标题/描述/选类目/填价格 → 上传图片 → 点发布
+// 流程：填标题/选类目/传图/写描述/填价格 → 点发布
 // 图片先单独传到 OSS（ImageUploader 内部），这里只提交 objectKey
+//
+// ⚠️ 只做项目里真实存在的字段：标题、类目、图片、描述、价格。
+//    闲鱼上的「宝贝所在地」「发货方式」「原价」「属性规格」等一律不做。
 
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -86,9 +89,8 @@ async function handleSubmit() {
     })
 
     ElMessage.success('发布成功')
-    // Step 8 做完商品详情页后，这里改成 router.push(`/item/${id}`)
-    console.log('新商品 id =', id)
-    router.push('/')
+    // 跳到自己刚发布的详情页（非在售状态只有卖家本人能打开，正是这里）
+    router.push(`/item/${id}`)
   } catch (e) {
     // 失败提示由拦截器统一处理
   } finally {
@@ -104,85 +106,100 @@ function handleReset() {
 
 <template>
   <div class="sell-page">
-    <div class="page-head">
-      <h2>发布闲置</h2>
-      <p class="sub">填好信息、传几张实拍图，就能挂出去卖啦</p>
-    </div>
+    <div class="sell-card">
+      <h1 class="page-title">发闲置</h1>
 
-    <!-- ★ AI 提示区：Step 11 在这里点亮（AI 推荐类目 / 合理价格区间） -->
-    <div class="ai-tip">
-      <span class="ai-badge">AI 助手</span>
-      <span class="ai-text">填写标题后，AI 会帮你推荐类目和合理价格区间（Step 11 接入）</span>
-    </div>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        class="sell-form"
+      >
+        <!-- ============ 基础信息 ============ -->
+        <h2 class="section-title">基础信息</h2>
 
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="88px"
-      label-position="right"
-      class="sell-form"
-    >
-      <el-form-item label="标题" prop="title">
-        <el-input
-          v-model="form.title"
-          maxlength="200"
-          show-word-limit
-          placeholder="例如：九成新 iPad Air 5 64G 深空灰"
-        />
-      </el-form-item>
+        <el-form-item label="标题" prop="title">
+          <el-input
+            v-model="form.title"
+            maxlength="200"
+            show-word-limit
+            size="large"
+            placeholder="例如：九成新 iPad Air 5 64G 深空灰"
+          />
+        </el-form-item>
 
-      <el-form-item label="类目" prop="categoryId">
-        <el-cascader
-          v-model="form.categoryId"
-          :options="categoryOptions"
-          :props="cascaderProps"
-          :loading="categoryLoading"
-          placeholder="请选择类目"
-          clearable
-          class="full-width"
-        />
-      </el-form-item>
+        <el-form-item label="类目" prop="categoryId">
+          <el-cascader
+            v-model="form.categoryId"
+            :options="categoryOptions"
+            :props="cascaderProps"
+            :loading="categoryLoading"
+            size="large"
+            placeholder="请选择类目"
+            clearable
+            class="full-width"
+          />
+        </el-form-item>
 
-      <el-form-item label="价格" prop="price">
-        <el-input-number
-          v-model="form.price"
-          :min="0.01"
-          :max="99999999.99"
-          :precision="2"
-          :step="1"
-          controls-position="right"
-          placeholder="0.00"
-          class="price-input"
-        />
-        <span class="unit">元</span>
-      </el-form-item>
+        <el-form-item label="宝贝图片" prop="images">
+          <div class="upload-wrap">
+            <ImageUploader v-model="form.images" :limit="5" />
+            <p class="field-tip">第一张会作为封面图，建议放最清晰的一张</p>
+          </div>
+        </el-form-item>
 
-      <el-form-item label="描述" prop="description">
-        <el-input
-          v-model="form.description"
-          type="textarea"
-          :rows="5"
-          maxlength="5000"
-          show-word-limit
-          placeholder="说说成色、购买时间、有无磕碰、配件是否齐全…"
-        />
-      </el-form-item>
+        <el-form-item label="宝贝描述" prop="description">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="6"
+            maxlength="5000"
+            show-word-limit
+            placeholder="描述一下宝贝的品牌型号、成色、购买时间、有无磕碰、配件是否齐全…"
+          />
+        </el-form-item>
 
-      <el-form-item label="图片" prop="images">
-        <div class="upload-wrap">
-          <ImageUploader v-model="form.images" :limit="5" />
-          <p class="upload-tip">第一张会作为封面图，建议放最清晰的一张</p>
+        <!-- ★ AI 提示区：Step 11 在这里点亮（类目推荐 / 合理价格区间） -->
+        <div class="ai-tip">
+          <span class="ai-badge">AI 助手</span>
+          <span class="ai-text">上传主图、填写标题后，AI 会帮你推荐类目和合理价格区间（Step 11 接入）</span>
         </div>
-      </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <!-- ============ 价格 ============ -->
+        <h2 class="section-title">价格</h2>
+
+        <el-form-item label="价格" prop="price">
+          <div class="price-field">
+            <span class="yen">¥</span>
+            <el-input-number
+              v-model="form.price"
+              :min="0.01"
+              :max="99999999.99"
+              :precision="2"
+              :controls="false"
+              placeholder="0.00"
+              class="price-input"
+            />
+          </div>
+          <p class="field-tip">定个能卖出去的价。发布后可在详情页下架修改</p>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 底部吸底提交条 -->
+    <div class="submit-bar">
+      <div class="submit-inner">
+        <el-button link :disabled="submitting" @click="handleReset">重置</el-button>
+        <el-button
+          class="publish-btn"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
           发布
         </el-button>
-        <el-button :disabled="submitting" @click="handleReset">重置</el-button>
-      </el-form-item>
-    </el-form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -190,31 +207,101 @@ function handleReset() {
 .sell-page {
   max-width: 760px;
   margin: 0 auto;
+  padding-bottom: 96px; /* 给底部吸底条留位，别遮住价格输入框 */
 }
 
-.page-head h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
+/* 白色大卡片（闲鱼那种一整块） */
+.sell-card {
+  padding: 32px 40px 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.page-title {
+  margin: 0 0 var(--space-lg);
+  font-size: 26px;
+  font-weight: 700;
   color: var(--text-main);
 }
 
-.page-head .sub {
-  margin: 0 0 var(--space-md);
-  font-size: 13px;
+/* 分区小标题 */
+.section-title {
+  margin: var(--space-lg) 0 var(--space-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* 标签在上方：比默认的大一点、深一点 */
+.sell-form :deep(.el-form-item__label) {
+  padding-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sell-form :deep(.el-form-item) {
+  margin-bottom: var(--space-md);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.upload-wrap {
+  width: 100%;
+}
+
+.field-tip {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
   color: var(--text-muted);
+}
+
+/* 价格：左侧 ¥ 号 + 无步进按钮的输入框 */
+.price-field {
+  position: relative;
+  width: 220px;
+}
+
+.yen {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 2;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--text-sub);
+  pointer-events: none;
+}
+
+.price-input {
+  width: 100%;
+}
+
+.price-input :deep(.el-input__inner) {
+  padding-left: 28px;
+  font-size: 16px;
 }
 
 /* AI 提示区：先占位，Step 11 再填内容 */
 .ai-tip {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-xs);
-  margin-bottom: var(--space-lg);
+  margin: var(--space-md) 0 var(--space-lg);
   padding: var(--space-sm) var(--space-md);
   border: 1px dashed var(--brand);
   border-radius: var(--radius-md);
   background: var(--brand-light);
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .ai-badge {
@@ -230,34 +317,43 @@ function handleReset() {
   color: var(--text-sub);
 }
 
-.sell-form {
-  padding: var(--space-lg);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+/* ================= 吸底提交条 ================= */
+.submit-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--border);
 }
 
-.full-width {
-  width: 100%;
+.submit-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px var(--space-md);
 }
 
-.price-input {
-  width: 200px;
+/* 橙色胶囊按钮，和顶栏同色 */
+.publish-btn {
+  width: 240px;
+  height: 46px;
+  border: none;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--brand-text);
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.unit {
-  margin-left: var(--space-xs);
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.upload-wrap {
-  width: 100%;
-}
-
-.upload-tip {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-muted);
+.publish-btn:hover,
+.publish-btn:focus {
+  background: var(--brand-hover);
+  color: var(--brand-text);
 }
 </style>
