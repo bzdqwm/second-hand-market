@@ -28,6 +28,9 @@ function logout() {
 // 右侧快捷菜单：登录页不需要
 const showSideMenu = computed(() => route.name !== 'login')
 
+// 只有管理员才看到导航（用户端 / 管理端）；普通用户和游客只看标题
+const isAdmin = computed(() => user.value?.role === 'ADMIN')
+
 // 首页是"橙色渐变大头图"，顶栏要压在渐变上透明显示
 const isHome = computed(() => route.name === 'home')
 
@@ -40,7 +43,7 @@ const isSell = computed(() => route.name === 'sell')
     <header class="topbar" :class="{ 'on-hero': isHome, 'on-brand': isSell }">
       <!-- 点标题回首页 -->
       <RouterLink to="/" class="logo">二手交易平台</RouterLink>
-      <nav>
+      <nav v-if="isAdmin">
         <RouterLink to="/">用户端</RouterLink>
         <RouterLink to="/admin">管理端</RouterLink>
         <!-- 「卖闲置」入口已移到右侧悬浮菜单（SideMenu.vue） -->

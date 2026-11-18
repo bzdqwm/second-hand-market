@@ -16,6 +16,10 @@ import { useRouter } from 'vue-router'
 import { getItemList } from '../api/item'
 import { getCategoryList } from '../api/category'
 import { toCascaderOptions } from '../utils/category'
+// 首屏轮播右侧的 3D 杂物图（透明底 PNG，Vite 会打包成带 hash 的静态资源）
+import bannerClutter from '../assets/banner-clutter.png'   // 闲置杂物
+import bannerDigital from '../assets/banner-digital.png'   // 数码三件套
+import bannerHome from '../assets/banner-home.png'         // 家居厨具
 
 const router = useRouter()
 
@@ -35,19 +39,22 @@ const banners = [
     title: '把闲置，变成现金',
     desc: '拍照 → 填信息 → 挂出，三步就完事',
     gradient: 'linear-gradient(120deg, #ff8a3c 0%, #ff5e62 100%)',
-    image: ''
+    image: '',              // 整张背景海报（以后用）
+    art: bannerClutter      // 右侧装饰图
   },
   {
     title: '九成新数码好物',
     desc: '手机 / 平板 / 笔记本，同城可面交',
     gradient: 'linear-gradient(120deg, #ffb347 0%, #ff7b54 100%)',
-    image: ''
+    image: '',
+    art: bannerDigital
   },
   {
     title: '毕业季 · 清仓专场',
     desc: '家具 / 厨具 / 小电器，低价出',
     gradient: 'linear-gradient(120deg, #ffa17f 0%, #ff6f61 100%)',
-    image: ''
+    image: '',
+    art: bannerHome
   }
 ]
 
@@ -225,12 +232,20 @@ function fmtDate(s) {
           <div class="banner">
             <el-carousel height="360px" :interval="4500" arrow="hover">
               <el-carousel-item v-for="(b, i) in banners" :key="i">
-                <div class="banner-slide" :style="{ background: b.gradient }">
+                <div
+                  class="banner-slide"
+                  :class="{ 'has-art': !!b.art }"
+                  :style="{ background: b.gradient }"
+                >
                   <img v-if="b.image" :src="b.image" :alt="b.title" class="banner-img" />
+
                   <div class="banner-text">
                     <h2 class="banner-title">{{ b.title }}</h2>
                     <p class="banner-desc">{{ b.desc }}</p>
                   </div>
+
+                  <!-- 右下角 3D 装饰图 -->
+                  <img v-if="b.art" :src="b.art" :alt="b.title" class="banner-art" />
                 </div>
               </el-carousel-item>
             </el-carousel>
@@ -525,7 +540,7 @@ function fmtDate(s) {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 56px;
+  padding: 0 0 0 56px;
 }
 
 .banner-img {
@@ -540,6 +555,27 @@ function fmtDate(s) {
   position: relative;
   z-index: 1;
   color: #fff;
+}
+
+/* 有右侧装饰图时，文字区收窄到左侧，别和图重叠 */
+.banner-slide.has-art .banner-text {
+  flex: 0 0 auto;
+  max-width: 42%;
+}
+
+/* 右侧 3D 装饰图：贴右边缘、垂直居中，等比缩放不裁切 */
+.banner-art {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  margin-left: auto;
+  height: 86%;
+  width: auto;
+  max-width: 58%;
+  object-fit: contain;
+  object-position: right center;
+  display: block;
+  pointer-events: none;
 }
 
 .banner-title {
