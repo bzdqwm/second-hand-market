@@ -60,6 +60,14 @@ ai:
   python:
     base-url: http://127.0.0.1:8000
 
+  # ============================================================
+  # 内容审核
+  # mock：Java 侧假实现，固定 LOW（Step 9 用这个）
+  # http：调 Python /ai/moderate（Step 14 实现后切换）
+  # ============================================================
+  audit:
+    mode: mock
+
 jwt:
   # 签名密钥：HS256 要求至少 32 字节（256 bit），短了 jjwt 直接抛 WeakKeyException
   secret: market-second-hand-platform-jwt-secret-key-2026-hs256
@@ -69,3 +77,4 @@ jwt:
   header: Authorization
   # token 前缀（注意后面有一个空格）
   prefix: "Bearer "
+

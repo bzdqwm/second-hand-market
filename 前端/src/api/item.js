@@ -57,3 +57,17 @@ export function getItemList(params) {
 export function getItemDetail(id) {
   return request.get(`/item/${id}`)
 }
+
+/**
+ * 我发布的商品（必须登录，所有状态都能看到）
+ * @param {{page?:number, size?:number, status?:string}} params
+ * @returns {Promise<{records:Array<{id,title,price,coverThumbUrl,status,rejectReason,createTime}>,
+ *                    total:number, page:number, size:number, pages:number}>}
+ */
+export function getMyItems(params) {
+  const clean = {}
+  Object.entries(params || {}).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== '') clean[k] = v
+  })
+  return request.get('/item/mine', { params: clean })
+}

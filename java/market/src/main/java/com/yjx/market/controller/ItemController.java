@@ -7,6 +7,7 @@ import com.yjx.market.pojo.dto.ItemQueryDTO;
 import com.yjx.market.pojo.dto.ItemStatusDTO;
 import com.yjx.market.pojo.vo.ItemCardVO;
 import com.yjx.market.pojo.vo.ItemDetailVO;
+import com.yjx.market.pojo.vo.MyItemVO;
 import com.yjx.market.pojo.vo.PageVO;
 import com.yjx.market.service.ItemService;
 import jakarta.validation.Valid;
@@ -52,6 +53,18 @@ public class ItemController {
     @GetMapping("/list")
     public Result<PageVO<ItemCardVO>> list(@Valid ItemQueryDTO query) {
         return Result.ok(itemService.page(query));
+    }
+
+    /**
+     * 我发布的商品（必须登录）。
+     * 路径是字面量 "mine"，Spring 会优先匹配它而不是 /{id}。
+     */
+    @GetMapping("/mine")
+    public Result<PageVO<MyItemVO>> mine(
+            @RequestParam(value = "page", defaultValue = "1") long page,
+            @RequestParam(value = "size", defaultValue = "10") long size,
+            @RequestParam(value = "status", required = false) String status) {
+        return Result.ok(itemService.myItems(SecurityUtil.getCurrentUserId(), page, size, status));
     }
 
     /** 商品详情（游客可看；非在售商品只有卖家本人能看） */

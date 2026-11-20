@@ -52,6 +52,7 @@ const isSell = computed(() => route.name === 'sell')
 
       <div class="user-area">
         <template v-if="user">
+          <RouterLink to="/my" class="my-entry">我发布的</RouterLink>
           <span class="who">{{ user.nickname || user.username }}</span>
           <span v-if="user.role === 'ADMIN'" class="badge">管理员</span>
           <button class="logout" @click="logout">退出</button>
@@ -168,6 +169,42 @@ main {
 
 .topbar.on-hero .who {
   color: #fff;
+}
+
+/* 「我发布的」入口：跟着顶栏配色走 */
+.topbar a.my-entry {
+  color: var(--text-sub);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.topbar a.my-entry:hover {
+  color: var(--brand);
+}
+
+.topbar a.my-entry.router-link-active {
+  color: var(--brand);
+  background: var(--brand-light);
+}
+
+.topbar.on-hero a.my-entry {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.topbar.on-hero a.my-entry.router-link-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.topbar.on-brand a.my-entry {
+  color: #fff;
+}
+
+.topbar.on-brand a.my-entry.router-link-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .topbar.on-hero .to-login {

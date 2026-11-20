@@ -12,6 +12,7 @@ import ItemDetailView from './views/ItemDetailView.vue'
 import AdminView from './views/AdminView.vue'
 import LoginView from './views/LoginView.vue'
 import SellView from './views/SellView.vue'
+import MyView from './views/MyView.vue'
 import UploadDemoView from './views/UploadDemoView.vue'
 import { getToken, getUser } from './utils/token'
 
@@ -37,6 +38,13 @@ const router = createRouter({
       name: 'admin',
       component: AdminView,
       meta: { requiresAuth: true, roles: ['ADMIN'], title: '管理端' }
+    },
+    {
+      // 我发布的：必须登录（自己的商品列表，后端也要 token）
+      path: '/my',
+      name: 'my',
+      component: MyView,
+      meta: { requiresAuth: true, title: '我发布的' }
     },
     {
       path: '/login',

@@ -68,6 +68,8 @@ public class SecurityConfig {
                         // 接口文档：公开
                         .requestMatchers("/doc.html", "/webjars/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/favicon.ico").permitAll()
+                        // 我发布的：必须登录（必须写在 /api/item/* 之前，否则会被当游客放行）
+                        .requestMatchers(HttpMethod.GET, "/api/item/mine").authenticated()
                         // 游客白名单：商品列表 / 详情只读
                         .requestMatchers(HttpMethod.GET, "/api/item/list", "/api/item/*").permitAll()
                         // 管理后台：必须 ADMIN

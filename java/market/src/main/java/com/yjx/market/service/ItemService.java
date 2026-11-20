@@ -4,6 +4,7 @@ import com.yjx.market.pojo.dto.ItemCreateDTO;
 import com.yjx.market.pojo.dto.ItemQueryDTO;
 import com.yjx.market.pojo.vo.ItemCardVO;
 import com.yjx.market.pojo.vo.ItemDetailVO;
+import com.yjx.market.pojo.vo.MyItemVO;
 import com.yjx.market.pojo.vo.PageVO;
 
 /**
@@ -45,4 +46,14 @@ public interface ItemService {
      * @param currentUserId 当前登录用户 ID，游客传 null
      */
     ItemDetailVO detail(Long itemId, Long currentUserId);
+
+    /**
+     * 我发布的商品（所有状态都能看到，包括被驳回的和已下架的）。
+     *
+     * @param sellerId 当前登录用户 ID
+     * @param page     页码，从 1 开始
+     * @param size     每页条数
+     * @param status   可选的状态过滤，null 表示全部
+     */
+    PageVO<MyItemVO> myItems(Long sellerId, long page, long size, String status);
 }
