@@ -77,4 +77,24 @@ public class OssTemplate {
         ossClient.deleteObject(props.getBucket(), objectKey);
         log.info("OSS 删除：key={}", objectKey);
     }
+
+    /**
+     * 头像展示地址。
+     * <p>
+     * 库里存的是 objectKey（如 items/2026/11/20/xxx.jpg），私有桶不能直接拼域名访问，
+     * 必须现场签名。头像最大渲染不到 100px，用缩略图省流量。
+     *
+     * @param objectKey 库里存的值，可能为 null
+     * @return 可直接给 img 用的地址；没有头像时返回 null
+     */
+    public String avatarUrl(String objectKey) {
+        if (!StringUtils.hasText(objectKey)) {
+            return null;
+        }
+        // 兼容历史数据：早期可能直接存了完整 URL，原样返回，别再拼 _thumb
+        if (objectKey.startsWith("http://") || objectKey.startsWith("https://")) {
+            return objectKey;
+        }
+        return signedUrl(objectKey.replaceAll("\\.jpg$", "_thumb.jpg"), false);
+    }
 }

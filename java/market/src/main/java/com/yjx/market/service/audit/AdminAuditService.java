@@ -198,7 +198,7 @@ public class AdminAuditService {
         SellerVO seller = new SellerVO();
         seller.setId(user.getId());
         seller.setNickname(nicknameOf(user));
-        seller.setAvatar(user.getAvatar());
+        seller.setAvatar(ossTemplate.avatarUrl(user.getAvatar()));
         seller.setCreateTime(user.getCreateTime());
         return seller;
     }

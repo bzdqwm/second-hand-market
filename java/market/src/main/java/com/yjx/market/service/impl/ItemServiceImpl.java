@@ -260,7 +260,7 @@ public class ItemServiceImpl implements ItemService {
             seller.setNickname(user.getNickname() == null || user.getNickname().isBlank()
                     ? user.getUsername()
                     : user.getNickname());
-            seller.setAvatar(user.getAvatar());
+            seller.setAvatar(ossTemplate.avatarUrl(user.getAvatar()));
             seller.setCreateTime(user.getCreateTime());
         }
 

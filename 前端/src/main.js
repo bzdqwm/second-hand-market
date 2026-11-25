@@ -13,6 +13,7 @@ import AdminView from './views/AdminView.vue'
 import LoginView from './views/LoginView.vue'
 import SellView from './views/SellView.vue'
 import MyView from './views/MyView.vue'
+import SettingsView from './views/SettingsView.vue'
 import UploadDemoView from './views/UploadDemoView.vue'
 import { getToken, getUser } from './utils/token'
 
@@ -45,6 +46,13 @@ const router = createRouter({
       name: 'my',
       component: MyView,
       meta: { requiresAuth: true, title: '我发布的' }
+    },
+    {
+      // 账户设置：改昵称/头像/密码，必须登录
+      path: '/settings',
+      name: 'settings',
+      component: SettingsView,
+      meta: { requiresAuth: true, title: '账户设置' }
     },
     {
       path: '/login',

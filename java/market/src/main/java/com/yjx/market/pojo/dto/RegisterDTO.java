@@ -20,6 +20,6 @@ public class RegisterDTO {
     @Size(min = 6, max = 20, message = "密码长度必须是 6~20 位")
     private String password;
 
-    @Size(max = 20, message = "昵称最长 20 位")
+    @Size(max = 8, message = "昵称最长 8 位")
     private String nickname;
 }

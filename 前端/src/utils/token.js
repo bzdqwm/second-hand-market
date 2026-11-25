@@ -29,6 +29,8 @@ export function getUser() {
 /** 存用户信息（只放 id/username/nickname/avatar/role，不放 token） */
 export function setUser(user) {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
+  // 通知顶栏等常驻组件刷新：页面里改了资料，不跳路由也能立刻看到新昵称
+  window.dispatchEvent(new CustomEvent('market:user-updated'))
 }
 
 /** 清空登录状态（退出登录 / token 失效时用） */

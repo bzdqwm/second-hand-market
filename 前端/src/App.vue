@@ -1,23 +1,73 @@
 <script setup>
 // 顶层组件：只负责布局 + 导航，具体内容交给 router-view 渲染
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getToken, getUser, clearAuth } from './utils/token'
+import { getToken, getUser, setUser, clearAuth } from './utils/token'
+import { getMe } from './api/user'
 import SideMenu from './components/SideMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 // 当前登录用户（未登录为 null）
-// 用 watch 监听路由变化来刷新：登录成功后会 push 到新路由，退出登录也会跳转
 const user = ref(getToken() ? getUser() : null)
-watch(
-  () => route.fullPath,
-  () => {
-    user.value = getToken() ? getUser() : null
+
+function refreshUser() {
+  user.value = getToken() ? getUser() : null
+}
+
+// 两个刷新时机：
+//   ① 路由变化（登录成功会跳路由、退出也会跳）
+//   ② 设置页保存资料后派发的自定义事件（不跳路由也要立刻变）
+watch(() => route.fullPath, refreshUser)
+onMounted(() => {
+  window.addEventListener('market:user-updated', refreshUser)
+  syncFromServer()
+})
+onBeforeUnmount(() => window.removeEventListener('market:user-updated', refreshUser))
+
+/**
+ * 进站时用服务端数据覆盖本地缓存。
+ * <p>
+ * 为什么需要：头像存的是签名地址，几小时后会过期，
+ * 光靠 localStorage 里的旧值，过一夜再看顶栏头像就 404 了。
+ * 这里刷新一次，昵称/头像都拿到最新的。
+ */
+async function syncFromServer() {
+  if (!getToken()) return
+  try {
+    const me = await getMe()
+    setUser({
+      id: me.id,
+      username: me.username,
+      nickname: me.nickname,
+      avatar: me.avatar,
+      role: me.role
+    })
+  } catch (e) {
+    // 401 由拦截器处理（清登录态跳登录页），其它错误忽略，继续用缓存值
   }
-)
+}
+
+// 头像没图时显示昵称首字
+const userInitial = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  const name = u.nickname || u.username || ''
+  return name.slice(0, 1).toUpperCase()
+})
+
+// 顶栏下拉菜单的三项
+function onUserCommand(cmd) {
+  if (cmd === 'settings') {
+    router.push('/settings')
+  } else if (cmd === 'my') {
+    router.push('/my')
+  } else if (cmd === 'logout') {
+    logout()
+  }
+}
 
 function logout() {
   clearAuth()
@@ -52,10 +102,24 @@ const isSell = computed(() => route.name === 'sell')
 
       <div class="user-area">
         <template v-if="user">
-          <RouterLink to="/my" class="my-entry">我发布的</RouterLink>
-          <span class="who">{{ user.nickname || user.username }}</span>
-          <span v-if="user.role === 'ADMIN'" class="badge">管理员</span>
-          <button class="logout" @click="logout">退出</button>
+          <!-- 点开是下拉菜单：账户设置 / 我发布的 / 退出登录 -->
+          <el-dropdown trigger="click" placement="bottom-end" @command="onUserCommand">
+            <span class="user-trigger">
+              <el-avatar :size="28" :src="user.avatar || undefined" class="u-avatar">
+                {{ userInitial }}
+              </el-avatar>
+              <span class="who">{{ user.nickname || user.username }}</span>
+              <span v-if="user.role === 'ADMIN'" class="badge">管理员</span>
+              <span class="caret">▾</span>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="settings">账户设置</el-dropdown-item>
+                <el-dropdown-item command="my">我发布的</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
         <RouterLink v-else to="/login" class="to-login">登录 / 注册</RouterLink>
       </div>
@@ -171,40 +235,41 @@ main {
   color: #fff;
 }
 
-/* 「我发布的」入口：跟着顶栏配色走 */
-.topbar a.my-entry {
-  color: var(--text-sub);
-  text-decoration: none;
-  font-size: 13px;
+/* 顶栏用户下拉：头像 + 昵称 + 小三角 */
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 4px 8px;
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
 }
 
-.topbar a.my-entry:hover {
-  color: var(--brand);
+.user-trigger:hover {
+  background: rgba(255, 107, 53, 0.08);
 }
 
-.topbar a.my-entry.router-link-active {
-  color: var(--brand);
-  background: var(--brand-light);
-}
-
-.topbar.on-hero a.my-entry {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.topbar.on-hero a.my-entry.router-link-active {
+.u-avatar {
+  background: var(--brand);
   color: #fff;
-  background: rgba(255, 255, 255, 0.22);
+  font-size: 13px;
+  flex: 0 0 auto;
 }
 
-.topbar.on-brand a.my-entry {
-  color: #fff;
+.caret {
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
-.topbar.on-brand a.my-entry.router-link-active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.22);
+.topbar.on-hero .user-trigger:hover,
+.topbar.on-brand .user-trigger:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.topbar.on-hero .caret,
+.topbar.on-brand .caret {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .topbar.on-hero .to-login {
