@@ -31,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yjx.market.service.audit.AiAuditClient;
 import com.yjx.market.service.audit.AuditRecordService;
 import com.yjx.market.service.audit.AuditResult;
+import com.yjx.market.common.event.ItemOnSaleEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -58,6 +60,7 @@ public class ItemServiceImpl implements ItemService {
     private final UserMapper userMapper; // 新增：批量查卖家昵称
     private final OssTemplate ossTemplate;// 新增：给封面签缩略图地址
     private final AuditRecordMapper auditRecordMapper; // 新增：我发布的列表要带驳回理由
+    private final ApplicationEventPublisher eventPublisher; // 新增：上架后发事件建向量索引
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -92,6 +95,11 @@ public class ItemServiceImpl implements ItemService {
             ItemStatusMachine.assertCan(ItemStatus.PENDING_AUDIT, ItemStatus.ON_SALE, StatusActor.SYSTEM);
             item.setStatus(ItemStatus.ON_SALE.getCode());
             itemMapper.updateById(item);
+
+            // 上架了才需要建索引；发布事件而不是直接调 Python，
+            // 由监听器在事务提交后执行，失败也不影响上架（Step 10）
+            eventPublisher.publishEvent(
+                    new ItemOnSaleEvent(item.getId(), item.getTitle(), item.getDescription()));
         }
 
         // ④ 留痕：机审结论无论结果如何都要写

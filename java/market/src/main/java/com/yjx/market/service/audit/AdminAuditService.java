@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yjx.market.common.exception.BusinessException;
+import com.yjx.market.common.event.ItemOnSaleEvent;
 import com.yjx.market.common.oss.OssTemplate;
 import com.yjx.market.common.result.ResultCode;
 import com.yjx.market.common.status.ItemStatus;
@@ -21,6 +22,7 @@ import com.yjx.market.pojo.entity.User;
 import com.yjx.market.pojo.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,7 @@ public class AdminAuditService {
     private final AuditRecordMapper auditRecordMapper;
     private final AuditRecordService auditRecordService;
     private final OssTemplate ossTemplate;
+    private final ApplicationEventPublisher eventPublisher; // 通过上架后发事件建向量索引
 
     /** 待审列表：只看 PENDING_AUDIT，先提交的先审 */
     public PageVO<AuditItemVO> list(long page, long size) {
@@ -168,6 +171,12 @@ public class AdminAuditService {
         itemMapper.updateById(item);
 
         auditRecordService.saveManual(itemId, operatorId, pass, dto.getReason());
+
+        // 人工通过 = 商品上架，同样要建向量索引（Step 10）
+        if (pass) {
+            eventPublisher.publishEvent(
+                    new ItemOnSaleEvent(item.getId(), item.getTitle(), item.getDescription()));
+        }
 
         log.info("人工审核完成：itemId={}, operatorId={}, {} -> {}, result={}",
                 itemId, operatorId, current.getCode(), target.getCode(), dto.getResult());
