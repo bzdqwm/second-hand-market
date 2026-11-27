@@ -72,6 +72,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/item/mine").authenticated()
                         // 游客白名单：商品列表 / 详情只读
                         .requestMatchers(HttpMethod.GET, "/api/item/list", "/api/item/*").permitAll()
+                        // AI 类目识别：发布页要用，游客也可能预览，公开
+                        .requestMatchers(HttpMethod.POST, "/api/ai/category").permitAll()
                         // 管理后台：必须 ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 其余全部需要登录

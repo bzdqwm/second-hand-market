@@ -29,3 +29,19 @@ def selector_loop_factory(use_subprocess: bool = False):
     "'function' object has no attribute 'create_task'"。
     """
     return asyncio.SelectorEventLoop(selectors.SelectSelector())
+
+def run_async(coro):
+    """给「脚本」用的 asyncio.run 替代品。
+
+    为什么不能直接用 asyncio.run：
+        它内部用 Windows 默认的 ProactorEventLoop，psycopg 异步不认识这个循环，
+        会一直刷 "Psycopg cannot use the 'ProactorEventLoop' to run in async mode"。
+
+    用法：
+        run_async(main())
+    """
+    loop = asyncio.SelectorEventLoop(selectors.SelectSelector())
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()

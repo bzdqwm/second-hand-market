@@ -17,6 +17,7 @@ from fastapi import FastAPI
 
 from app.core import db, embedding
 from app.core.config import WARMUP_ON_START
+from app.routers import category as category_router
 from app.routers import index as index_router
 
 logging.basicConfig(
@@ -49,6 +50,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Market AI Service", lifespan=lifespan)
 
 app.include_router(index_router.router)
+app.include_router(category_router.router)
 
 
 @app.get("/health")

@@ -7,12 +7,13 @@
 // ⚠️ 只做项目里真实存在的字段：标题、类目、图片、描述、价格。
 //    闲鱼上的「宝贝所在地」「发货方式」「原价」「属性规格」等一律不做。
 
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import ImageUploader from '../components/ImageUploader.vue'
 import { createItem } from '../api/item'
 import { getCategoryList } from '../api/category'
+import { recognizeCategory } from '../api/ai'
 import { toCascaderOptions } from '../utils/category'
 
 const router = useRouter()
@@ -56,6 +57,93 @@ const cascaderProps = {
 }
 
 onMounted(loadCategories)
+
+// ==================== AI 类目推荐 ====================
+// 交互：用户打标题 → 停手 800ms → 调后端猜类目 → 够可信就自动填好
+//
+// 为什么要防抖：打「iPad 2019 95新」会触发 10 次 input 事件，
+// 不防抖就是 10 次 HTTP + 10 次 embedding 计算，白烧算力。
+const AI_DEBOUNCE_MS = 800
+// 太短的标题没信息量（「i」「ip」），别浪费请求
+const AI_MIN_TITLE_LEN = 2
+
+const aiLoading = ref(false)
+// { hit, candidates, matched, threshold } —— 后端返回的整包结果
+const aiResult = ref(null)
+// 当前类目是不是 AI 填的（用户自己点过类目就置 false，不再显示「已自动填」）
+const aiFilled = ref(false)
+
+let aiTimer = null
+// 请求序号：只认最后一次响应，防止先发的慢请求覆盖后发的快请求
+let aiSeq = 0
+
+// 标题变化 → 重新计时
+watch(
+  () => form.title,
+  (val) => {
+    clearTimeout(aiTimer)
+
+    const title = (val || '').trim()
+    if (title.length < AI_MIN_TITLE_LEN) {
+      aiResult.value = null
+      aiFilled.value = false
+      aiLoading.value = false
+      aiSeq++ // 让飞行中的请求作废
+      return
+    }
+
+    aiTimer = setTimeout(() => runRecognize(title), AI_DEBOUNCE_MS)
+  }
+)
+
+// 用户自己改了类目 → 取消「AI 自动填写」的状态标记
+watch(
+  () => form.categoryId,
+  (val) => {
+    if (aiFilled.value && val !== aiResult.value?.hit?.categoryId) {
+      aiFilled.value = false
+    }
+  }
+)
+
+async function runRecognize(title) {
+  const seq = ++aiSeq
+  aiLoading.value = true
+
+  try {
+    const res = await recognizeCategory({ title, topK: 3 })
+    if (seq !== aiSeq) return // 已经有更新的请求了，这个结果丢掉
+
+    aiResult.value = res
+
+    // 只有 matched 才自动填；不达标就只把候选摆出来让用户点
+    if (res.matched && res.hit) {
+      form.categoryId = res.hit.categoryId
+      aiFilled.value = true
+      // 程序赋值不会触发 el-form 的 change 校验，手动把红字清掉
+      formRef.value?.clearValidate('categoryId')
+    }
+  } catch {
+    // 拦截器已经弹过提示，这里只需把加载态收掉（AI 挂了不影响手动发布）
+    if (seq === aiSeq) aiResult.value = null
+  } finally {
+    if (seq === aiSeq) aiLoading.value = false
+  }
+}
+
+/** 用户点了候选类目 */
+function pickCategory(hit) {
+  form.categoryId = hit.categoryId
+  aiFilled.value = false
+  formRef.value?.clearValidate('categoryId')
+}
+
+/** 0.5048 → "50%" */
+function scorePct(score) {
+  return Math.round((score || 0) * 100) + '%'
+}
+
+onBeforeUnmount(() => clearTimeout(aiTimer))
 
 async function loadCategories() {
   categoryLoading.value = true
@@ -142,6 +230,48 @@ function handleReset() {
           />
         </el-form-item>
 
+        <!-- ★ AI 类目助手：标题打完 800ms 自动识别，紧贴类目选择器 -->
+        <div class="ai-tip">
+          <span class="ai-badge">AI 助手</span>
+
+          <div class="ai-body">
+            <!-- 识别中 -->
+            <template v-if="aiLoading">
+              <span class="ai-text">正在识别类目…</span>
+            </template>
+
+            <!-- 识别成功且够可信：已经帮你填好 -->
+            <template v-else-if="aiResult && aiResult.matched && aiFilled">
+              <span class="ai-text">
+                已自动填好类目：<b>{{ aiResult.hit.path }}</b>
+                <span class="ai-score">置信度 {{ scorePct(aiResult.hit.score) }}</span>
+              </span>
+              <span class="ai-hint">选错了直接在上面改</span>
+            </template>
+
+            <!-- 有候选但不够可信：摆出来让用户点 -->
+            <template v-else-if="aiResult && aiResult.candidates.length">
+              <span class="ai-text">不太确定，猜的是这几个，点一下就用：</span>
+              <div class="ai-cands">
+                <el-tag
+                  v-for="c in aiResult.candidates"
+                  :key="c.categoryId"
+                  class="ai-cand"
+                  effect="plain"
+                  @click="pickCategory(c)"
+                >
+                  {{ c.path }} · {{ scorePct(c.score) }}
+                </el-tag>
+              </div>
+            </template>
+
+            <!-- 初始态 -->
+            <template v-else>
+              <span class="ai-text">填好标题后，AI 会自动帮你识别类目</span>
+            </template>
+          </div>
+        </div>
+
         <el-form-item label="宝贝图片" prop="images">
           <div class="upload-wrap">
             <ImageUploader v-model="form.images" :limit="5" />
@@ -159,12 +289,6 @@ function handleReset() {
             placeholder="描述一下宝贝的品牌型号、成色、购买时间、有无磕碰、配件是否齐全…"
           />
         </el-form-item>
-
-        <!-- ★ AI 提示区：Step 11 在这里点亮（类目推荐 / 合理价格区间） -->
-        <div class="ai-tip">
-          <span class="ai-badge">AI 助手</span>
-          <span class="ai-text">上传主图、填写标题后，AI 会帮你推荐类目和合理价格区间（Step 11 接入）</span>
-        </div>
 
         <!-- ============ 价格 ============ -->
         <h2 class="section-title">价格</h2>
@@ -315,6 +439,46 @@ function handleReset() {
 
 .ai-text {
   color: var(--text-sub);
+}
+
+/* AI 提示区内部排版：左边徽标，右边多行内容 */
+.ai-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-score {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-text);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ai-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 候选类目：可点的标签 */
+.ai-cands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ai-cand {
+  cursor: pointer;
+}
+
+.ai-cand:hover {
+  border-color: var(--brand);
+  color: var(--brand);
 }
 
 /* ================= 吸底提交条 ================= */

@@ -62,3 +62,11 @@ Thumbs.db
 desktop.ini
 *.log
 logs/
+# PyTorch 运行时缓存（会生成在当前工作目录）
+torchinductor_*/
+
+# pip 中断安装留下的临时目录
+pip-unpack-*/
+pip-install-*/
+pip-ephem-wheel-cache-*/
+pip-build-tracker-*/

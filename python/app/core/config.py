@@ -39,3 +39,5 @@ MODEL_CACHE_DIR = os.getenv("MARKET_MODEL_CACHE", "")
 
 # 是否在启动时预热模型（真正 encode 一次），关掉能加快启动
 WARMUP_ON_START = os.getenv("MARKET_WARMUP", "1") == "1"
+
+DATA_DIR = os.path.join(BASE_DIR, "app", "data")

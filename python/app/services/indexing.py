@@ -1,14 +1,18 @@
-"""向量索引的读写。
+"""向量索引入库（商品 / 规则）。
 
-核心是 upsert（INSERT ... ON CONFLICT DO UPDATE）：
-计划书要求「重跑不重复插入」，靠 item_id / rule_id 的主键约束 + ON CONFLICT 实现。
+分层：
+    dao/item_dao.py、dao/rule_dao.py  只管 SQL
+    这个文件只管「切批、去重、拼文本、算向量」，然后交给 dao
+
+核心是「幂等写入」（具体 SQL 在 dao 里）：
+计划书要求「重跑不重复插入」，靠主键约束 + ON CONFLICT 实现。
 不用「先删后插」是因为那会出现「删完插失败 → 数据没了」的空窗。
 """
 
 import logging
 
-from app.core import db
 from app.core.embedding import embed_text, encode
+from app.dao import item_dao, rule_dao
 from app.schemas.index import ItemDoc, RuleDoc
 
 log = logging.getLogger("market.index")
@@ -32,34 +36,16 @@ async def index_items(items: list[ItemDoc]) -> int:
     docs = list(unique.values())
 
     written = 0
-    async with db.pool.connection() as conn:
-        for chunk in _chunks(docs, MAX_BATCH):
-            texts = [embed_text(d.title, d.description) for d in chunk]
-            vectors = await encode(texts)
+    for chunk in _chunks(docs, MAX_BATCH):
+        texts = [embed_text(d.title, d.description) for d in chunk]
+        vectors = await encode(texts)
 
-            rows = [
-                (d.itemId, text, vector)
-                for d, text, vector in zip(chunk, texts, vectors)
-                if text.strip()          # 标题描述全空的不入库
-            ]
-            if not rows:
-                continue
-
-            # executemany 挂在游标上，不在连接上（psycopg3 的 AsyncConnection 没有这个方法）。
-            # 批量走一次往返，比循环 execute 快一个数量级
-            async with conn.cursor() as cur:
-                await cur.executemany(
-                    """
-                    INSERT INTO item_vec (item_id, content, embedding, update_time)
-                    VALUES (%s, %s, %s, now())
-                    ON CONFLICT (item_id) DO UPDATE
-                       SET content     = EXCLUDED.content,
-                           embedding   = EXCLUDED.embedding,
-                           update_time = now()
-                    """,
-                    rows,
-                )
-            written += len(rows)
+        rows = [
+            (d.itemId, text, vector)
+            for d, text, vector in zip(chunk, texts, vectors)
+            if text.strip()          # 标题描述全空的不入库
+        ]
+        written += await item_dao.upsert_many(rows)
 
     log.info("商品向量写入完成：收到 %s 条，实际写入 %s 条", len(items), written)
     return written
@@ -74,34 +60,16 @@ async def index_rules(rules: list[RuleDoc]) -> int:
     docs = list(unique.values())
 
     written = 0
-    async with db.pool.connection() as conn:
-        for chunk in _chunks(docs, MAX_BATCH):
-            texts = [f"{d.title}\n{d.content}" for d in chunk]
-            vectors = await encode(texts)
+    for chunk in _chunks(docs, MAX_BATCH):
+        texts = [f"{d.title}\n{d.content}" for d in chunk]
+        vectors = await encode(texts)
 
-            rows = [
-                (d.ruleId, d.title, d.content, vector, d.ruleVer)
-                for d, vector in zip(chunk, vectors)
-                if d.content.strip()
-            ]
-            if not rows:
-                continue
-
-            async with conn.cursor() as cur:
-                await cur.executemany(
-                    """
-                    INSERT INTO rule_vec (rule_id, title, content, embedding, rule_ver, update_time)
-                    VALUES (%s, %s, %s, %s, %s, now())
-                    ON CONFLICT (rule_id) DO UPDATE
-                       SET title       = EXCLUDED.title,
-                           content     = EXCLUDED.content,
-                           embedding   = EXCLUDED.embedding,
-                           rule_ver    = EXCLUDED.rule_ver,
-                           update_time = now()
-                    """,
-                    rows,
-                )
-            written += len(rows)
+        rows = [
+            (d.ruleId, d.title, d.content, vector, d.ruleVer)
+            for d, vector in zip(chunk, vectors)
+            if d.content.strip()
+        ]
+        written += await rule_dao.upsert_many(rows)
 
     log.info("规则向量写入完成：收到 %s 条，实际写入 %s 条", len(rules), written)
     return written
@@ -109,7 +77,4 @@ async def index_rules(rules: list[RuleDoc]) -> int:
 
 async def counts() -> tuple[int, int]:
     """两张表当前条数，给返回体和验收用（跑两次条数不变）。"""
-    async with db.pool.connection() as conn:
-        cur = await conn.execute("SELECT (SELECT count(*) FROM item_vec), (SELECT count(*) FROM rule_vec)")
-        item_count, rule_count = await cur.fetchone()
-    return item_count, rule_count
+    return await item_dao.count(), await rule_dao.count()
